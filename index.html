@@ -3,138 +3,356 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cloud ⇄ Edge Toggle</title>
+  <title>Cloud vs Edge Playground</title>
   <style>
     :root {
       --bg: #0f0f0f;
       --fg: #eaeaea;
       --accent: #4ade80;
-      --muted: #555;
-      --danger: #ef4444;
-      --transition: 0.2s ease;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --muted: #666;
+      --card: #1a1a1a;
+      --transition: .2s ease;
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     }
-    body {
-      background: var(--bg);
-      color: var(--fg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 2rem 1rem;
-      box-sizing: border-box;
+    body{
+      margin:0;padding:1.5rem;background:var(--bg);color:var(--fg);
+      display:flex;flex-direction:column;align-items:center;min-height:100vh;box-sizing:border-box;
+    }
+    h1,h2,h3{margin:.6rem 0 1rem;}
+    a{color:var(--accent);}
+    .container{width:min(960px,100%);}
+    /* Triangle toggle */
+    .options{
+      position:relative;width:min(360px,90vw);aspect-ratio:1/1;
+      margin:2rem auto 2.2rem;
+    }
+    .option{
+      position:absolute;width:42%;height:42%;
+      border:2px solid var(--muted);border-radius:50%;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;text-align:center;
+      padding:.4rem; /* smaller padding */
+      transition:all var(--transition);user-select:none;
+      background:rgba(255,255,255,.03);font-weight:500;
+      font-size:1.2rem; /* <-- smaller text */
+      line-height:1.2;
+    }
+    .option.active{
+      border-color:var(--accent);box-shadow:0 0 16px -2px var(--accent);color:var(--accent);
+    }
+    .option:hover{border-color:var(--fg);}
+    .latency{top:0;left:50%;transform:translate(-50%,0);}
+    .bandwidth{bottom:0;left:0;}
+    .security{bottom:0;right:0;}
+    .result{
+      text-align:center;font-size:clamp(2.4rem,8vw,6rem);
+      font-weight:800;letter-spacing:.15em;
+      transition:color var(--transition),text-shadow var(--transition);
+      margin-bottom:1rem;
+    }
+    .result.edge{color:var(--accent);text-shadow:0 0 20px var(--accent);}
+    .result.cloud{color:var(--fg);text-shadow:0 0 10px var(--fg);}
+    .hint{text-align:center;color:var(--muted);margin-bottom:2rem;font-size:.9rem;}
+
+    /* Tabs + cases */
+    .tabs{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap;}
+    .tab-btn{
+      background:var(--card);border:0;color:var(--fg);padding:.5rem 1rem;
+      border-radius:8px;cursor:pointer;transition:background var(--transition),color var(--transition);
+      font-size:.9rem;
+    }
+    .tab-btn.active{background:var(--accent);color:#000;font-weight:600;}
+    .cases{display:grid;gap:.6rem;}
+    .case-card{
+      background:var(--card);border-radius:10px;padding:.8rem 1rem;
+      cursor:pointer;transition:background var(--transition);
+    }
+    .case-card:hover{background:#222;}
+    .case-title{
+      margin:0;font-size:1rem;font-weight:600;display:flex;justify-content:space-between;align-items:center;
+    }
+    .case-body{margin-top:.5rem;line-height:1.5;display:none;color:#ccc;font-size:.9rem;}
+    .badge{
+      font-size:.7rem;padding:.15rem .45rem;border-radius:999px;background:var(--muted);color:#000;
+      margin-left:.4rem;text-transform:uppercase;letter-spacing:.08em;
+    }
+    .badge.Edge{background:var(--accent);}
+    .badge.Cloud{background:#60a5fa;}
+    .badge.Hybrid{background:#fbbf24;}
+
+    /* Quiz */
+    .quiz-section{
+      margin:3rem 0 2rem;
+      background:var(--card);border-radius:12px;padding:1.2rem 1.4rem;
+    }
+    .quiz-q{
+      margin-bottom:1rem;
+      border-bottom:1px solid #222;padding-bottom:1rem;
+    }
+    .quiz-q:last-child{border-bottom:none;padding-bottom:0;}
+    .quiz-q h4{margin:.2rem 0 .6rem;font-size:1rem;}
+    .quiz-options{display:flex;gap:.6rem;flex-wrap:wrap;}
+    .quiz-option{
+      background:#222;border:0;color:var(--fg);padding:.35rem .8rem;border-radius:6px;
+      cursor:pointer;font-size:.85rem;transition:background var(--transition),transform var(--transition);
+    }
+    .quiz-option.selected{background:var(--accent);color:#000;transform:scale(0.97);}
+    .quiz-result{
+      margin-top:1rem;padding:1rem;background:#111;border-radius:8px;display:none;
+      line-height:1.6;font-size:.9rem;
+    }
+    .quiz-actions{
+      text-align:right;margin-top:1rem;
+    }
+    .quiz-btn{
+      background:var(--accent);color:#000;border:0;padding:.6rem 1.1rem;
+      border-radius:8px;font-size:.9rem;cursor:pointer;font-weight:600;
     }
 
-    h1 { margin: 0 0 3rem 0; font-size: clamp(1.6rem, 5vw, 3rem); }
-
-    .options {
-      position: relative;
-      width: min(500px, 90vw);
-      aspect-ratio: 1/1;
-      margin-bottom: 3rem;
-    }
-
-    .option {
-      position: absolute;
-      width: 40%;
-      height: 40%;
-      border: 2px solid var(--muted);
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 0.5rem;
-      transition: all var(--transition);
-      user-select: none;
-      background: rgba(255,255,255,0.02);
-    }
-    .option.active {
-      border-color: var(--accent);
-      box-shadow: 0 0 16px -2px var(--accent);
-      color: var(--accent);
-    }
-    .option:hover { border-color: var(--fg); }
-
-    /* Place them like a triangle (similar vibe to fastgood.cheap) */
-    .option.latency   { top: 0; left: 50%; transform: translate(-50%, 0); }
-    .option.bandwidth { bottom: 0; left: 0; transform: translate(0, 0); }
-    .option.security  { bottom: 0; right: 0; transform: translate(0, 0); }
-
-    .result {
-      font-size: clamp(2rem, 8vw, 6rem);
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      transition: color var(--transition), text-shadow var(--transition);
-      text-align: center;
-    }
-    .result.edge {
-      color: var(--accent);
-      text-shadow: 0 0 20px var(--accent);
-    }
-    .result.cloud {
-      color: var(--fg);
-      text-shadow: 0 0 10px var(--fg);
-    }
-
-    .hint {
-      color: var(--muted);
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-
-    /* Small screens adjustments */
-    @media (max-width: 480px) {
-      .option { font-size: 0.8rem; }
-    }
+    .footer{margin:3rem 0 1rem;text-align:center;font-size:.8rem;color:var(--muted);}
+    @media (max-width:480px){.option{font-size:.7rem;}}
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Cloud vs Edge Playground</h1>
 
-  <h1>Pick Your Priorities</h1>
+    <!-- Triangle toggle -->
+    <div class="options" id="options">
+      <div class="option latency"   data-key="latency">Lower<br>Latency</div>
+      <div class="option bandwidth" data-key="bandwidth">Lower<br>Bandwidth</div>
+      <div class="option security"  data-key="security">Enhanced<br>Security</div>
+    </div>
 
-  <div class="options" id="options">
-    <div class="option latency"   data-key="latency">Lower<br>Latency</div>
-    <div class="option bandwidth" data-key="bandwidth">Lower<br>Bandwidth</div>
-    <div class="option security"  data-key="security">Enhanced<br>Security</div>
+    <div id="result" class="result cloud">CLOUD</div>
+    <div class="hint">任一需求成立 → EDGE（URL 會記住你的選擇）</div>
+
+    <!-- Quiz section -->
+    <div class="quiz-section" id="quiz">
+      <h2>小測驗：你會選 Cloud 還是 Edge？</h2>
+      <div id="quizQuestions"></div>
+      <div class="quiz-actions">
+        <button class="quiz-btn" id="submitQuiz">交卷</button>
+      </div>
+      <div class="quiz-result" id="quizResult"></div>
+    </div>
+
+    <!-- Cases -->
+    <h2>產品級案例</h2>
+    <div class="tabs">
+      <button class="tab-btn active" data-type="all">All</button>
+      <button class="tab-btn" data-type="Edge">Edge</button>
+      <button class="tab-btn" data-type="Cloud">Cloud</button>
+      <button class="tab-btn" data-type="Hybrid">Hybrid</button>
+    </div>
+    <div class="cases" id="caseList"></div>
+
+    <div class="footer">
+      Pure static HTML • Host anywhere (GitHub Pages / Cloudflare Pages) • Made for demo
+    </div>
   </div>
 
-  <div id="result" class="result cloud">CLOUD</div>
-  <div class="hint">Toggle any option → switch to EDGE</div>
-
   <script>
-    // Simple state store
-    const state = {
-      latency:   false,
-      bandwidth: false,
-      security:  false,
-    };
+    /* ---------------- STATE ---------------- */
+    const state = { latency:false, bandwidth:false, security:false };
 
+    /* ---------------- TRIANGLE TOGGLE ---------------- */
     const optionsEl = document.getElementById('options');
     const resultEl  = document.getElementById('result');
 
-    // Toggle handler
     optionsEl.addEventListener('click', (e) => {
       const target = e.target.closest('.option');
       if (!target) return;
-
       const key = target.dataset.key;
       state[key] = !state[key];
       target.classList.toggle('active', state[key]);
-
       updateResult();
+      syncURL();
     });
 
-    function updateResult() {
-      // If any is true, show EDGE, else CLOUD
+    function updateResult(){
       const anyActive = Object.values(state).some(Boolean);
       resultEl.textContent = anyActive ? 'EDGE' : 'CLOUD';
       resultEl.classList.toggle('edge', anyActive);
       resultEl.classList.toggle('cloud', !anyActive);
     }
+
+    function syncURL(){
+      const params = new URLSearchParams(window.location.search);
+      params.set('latency',   state.latency ? '1':'0');
+      params.set('bandwidth', state.bandwidth ? '1':'0');
+      params.set('security',  state.security ? '1':'0');
+      history.replaceState({},'',`${location.pathname}?${params.toString()}`);
+    }
+
+    function loadFromURL(){
+      const params = new URLSearchParams(window.location.search);
+      ['latency','bandwidth','security'].forEach(k=>{
+        const v = params.get(k);
+        state[k] = v === '1';
+        const el = document.querySelector(`.option.${k}`);
+        if(el) el.classList.toggle('active', state[k]);
+      });
+      updateResult();
+    }
+
+    /* ---------------- CASE LIST ---------------- */
+    const cases = [
+      // Cloud
+      { title:"YouTube / Netflix（影音串流）", type:"Cloud",
+        why:"大量轉碼、全球 CDN 發佈，流量高峰要彈性擴縮；集中於雲端更划算與易維運。" },
+      { title:"Figma / Canva（多人設計協作）", type:"Cloud",
+        why:"多人同步編輯、版本控制、權限管理集中在雲端，延遲可接受。" },
+      { title:"Slack / Discord（協作通訊）", type:"Cloud",
+        why:"多租戶系統、訊息歷史保存、搜尋/合規需求統一處理。" },
+      { title:"Salesforce / HubSpot（CRM）", type:"Cloud",
+        why:"企業級客戶資料集中、報表與自動化流程在雲端最易管理。" },
+      { title:"Zoom / Google Meet（視訊會議核心架構）", type:"Cloud",
+        why:"雲端 MCU/SFU、錄影/字幕/翻譯等重運算集中，全球互通。" },
+      { title:"Snowflake / BigQuery（資料湖 & 離線分析）", type:"Cloud",
+        why:"集中所有原始資料，隨取隨算；用雲端算力做大規模分析。" },
+      { title:"Stripe / PayPal / Auth0（支付 & 身份）", type:"Cloud",
+        why:"合規與審計集中處理，統一帳號與金流服務。" },
+      // Edge
+      { title:"Tesla Autopilot（車端即時感知）", type:"Edge",
+        why:"煞車/轉向需毫秒反應、網路可能中斷，車上 NPU/GPU 直接推論。" },
+      { title:"Apple Face ID / Pixel On-Device AI", type:"Edge",
+        why:"隱私與延遲要求高；臉部辨識、影像強化在裝置端完成。" },
+      { title:"工廠 AOI 瑕疵檢測設備", type:"Edge",
+        why:"高清影像量大＋需要即時；現場運算後只回傳結果，省頻寬也保密。" },
+      { title:"DJI 無人機避障 / 飛行控制", type:"Edge",
+        why:"飛行時網路不穩，需即時處理感測數據與影像。" },
+      { title:"Google Meet 背景虛化/美顏（視覺特效）", type:"Edge",
+        why:"即時影像特效、避免送原始影像到雲端，常在用戶端本地跑。" },
+      // Hybrid
+      { title:"Ring / Nest Cam（家用攝影機）", type:"Hybrid",
+        why:"裝置端先做動作偵測省頻寬；雲端儲存影片、做長期分析與 AI 更新。" },
+      { title:"智慧路口號誌 / 智慧路燈", type:"Hybrid",
+        why:"邊緣即時控制紅綠燈；雲端彙整城市級資料、調整策略與 OTA。" },
+      { title:"直播平台內容審核", type:"Hybrid",
+        why:"邊緣先做快速過濾（低延遲）；雲端再做深度審核與模型再訓練。" },
+    ];
+
+    const caseListEl = document.getElementById('caseList');
+    const tabs = document.querySelectorAll('.tab-btn');
+
+    function renderCases(filterType='all'){
+      caseListEl.innerHTML='';
+      cases
+        .filter(c => filterType==='all'?true:c.type===filterType)
+        .forEach((c,idx)=>{
+          const card=document.createElement('div');
+          card.className='case-card';card.dataset.index=idx;
+
+          const title=document.createElement('h3');
+          title.className='case-title';
+          title.innerHTML=`${c.title} <span class="badge ${c.type}">${c.type}</span>`;
+          card.appendChild(title);
+
+          const body=document.createElement('div');
+          body.className='case-body';body.textContent=c.why;
+          card.appendChild(body);
+
+          card.addEventListener('click',()=>{
+            const open=body.style.display==='block';
+            body.style.display=open?'none':'block';
+          });
+
+          caseListEl.appendChild(card);
+        });
+    }
+
+    tabs.forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        tabs.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCases(btn.dataset.type);
+      });
+    });
+
+    /* ---------------- QUIZ ---------------- */
+    // Each question: text, correct, explain
+    const quizQuestions = [
+      {
+        q: "工廠的高清相機瑕疵檢測，需要毫秒級反應，影像量大且機密。",
+        answer: "Edge",
+        explain: "即時性 + 頻寬 + 隱私都很重要，先在現場推論最合理。"
+      },
+      {
+        q: "全球串流影音平台（例如 Netflix）要對影片做大量轉碼並全球發佈。",
+        answer: "Cloud",
+        explain: "算力需求大且要配合全球 CDN，雲端更合適。"
+      },
+      {
+        q: "家用攝影機（Ring/Nest Cam）現場偵測動作，影片需長期保存與更進一步分析。",
+        answer: "Hybrid",
+        explain: "邊緣先快速偵測，雲端做長期存儲與更深入分析。"
+      },
+      {
+        q: "手機上的臉部辨識（Face ID），要快速解鎖且避免影像外流。",
+        answer: "Edge",
+        explain: "隱私與延遲要求高，在裝置端完成最安全。"
+      },
+      {
+        q: "公司要做每月的銷售資料整併、報表與 BI 分析。",
+        answer: "Cloud",
+        explain: "離線且大規模分析，用雲端數倉最方便。"
+      },
+    ];
+
+    const quizContainer = document.getElementById('quizQuestions');
+    const quizResult    = document.getElementById('quizResult');
+    const submitQuizBtn = document.getElementById('submitQuiz');
+    const quizState = {}; // {index: 'Edge'|'Cloud'|'Hybrid'}
+
+    function renderQuiz(){
+      quizContainer.innerHTML='';
+      quizQuestions.forEach((item,idx)=>{
+        const qWrap=document.createElement('div');
+        qWrap.className='quiz-q';
+
+        const qTitle=document.createElement('h4');
+        qTitle.textContent = `Q${idx+1}. ${item.q}`;
+        qWrap.appendChild(qTitle);
+
+        const opts=document.createElement('div');
+        opts.className='quiz-options';
+        ['Edge','Cloud','Hybrid'].forEach(opt=>{
+          const btn=document.createElement('button');
+          btn.className='quiz-option';
+          btn.textContent=opt;
+          btn.addEventListener('click',()=>{
+            // toggle selection
+            quizState[idx]=opt;
+            // reset style
+            opts.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('selected'));
+            btn.classList.add('selected');
+          });
+          opts.appendChild(btn);
+        });
+
+        qWrap.appendChild(opts);
+        quizContainer.appendChild(qWrap);
+      });
+    }
+
+    submitQuizBtn.addEventListener('click',()=>{
+      let correct=0;
+      const total=quizQuestions.length;
+      let detailHTML="";
+      quizQuestions.forEach((item,idx)=>{
+        const userAns=quizState[idx] || "(未作答)";
+        const isRight=userAns===item.answer;
+        if(isRight) correct++;
+        detailHTML += `Q${idx+1}：你的答案 <b>${userAns}</b> ，正確答案 <b>${item.answer}</b>。<br>${item.explain}<br><br>`;
+      });
+      quizResult.innerHTML = `<b>你的分數：${correct} / ${total}</b><br><br>${detailHTML}`;
+      quizResult.style.display='block';
+    });
+
+    /* ---------------- INIT ---------------- */
+    loadFromURL();
+    renderCases('all');
+    renderQuiz();
   </script>
 </body>
 </html>
