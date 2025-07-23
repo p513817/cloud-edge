@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloud ⇄ Edge Toggle</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --fg: #eaeaea;
+      --accent: #4ade80;
+      --muted: #555;
+      --danger: #ef4444;
+      --transition: 0.2s ease;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 2rem 1rem;
+      box-sizing: border-box;
+    }
+
+    h1 { margin: 0 0 3rem 0; font-size: clamp(1.6rem, 5vw, 3rem); }
+
+    .options {
+      position: relative;
+      width: min(500px, 90vw);
+      aspect-ratio: 1/1;
+      margin-bottom: 3rem;
+    }
+
+    .option {
+      position: absolute;
+      width: 40%;
+      height: 40%;
+      border: 2px solid var(--muted);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.5rem;
+      transition: all var(--transition);
+      user-select: none;
+      background: rgba(255,255,255,0.02);
+    }
+    .option.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 16px -2px var(--accent);
+      color: var(--accent);
+    }
+    .option:hover { border-color: var(--fg); }
+
+    /* Place them like a triangle (similar vibe to fastgood.cheap) */
+    .option.latency   { top: 0; left: 50%; transform: translate(-50%, 0); }
+    .option.bandwidth { bottom: 0; left: 0; transform: translate(0, 0); }
+    .option.security  { bottom: 0; right: 0; transform: translate(0, 0); }
+
+    .result {
+      font-size: clamp(2rem, 8vw, 6rem);
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      transition: color var(--transition), text-shadow var(--transition);
+      text-align: center;
+    }
+    .result.edge {
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent);
+    }
+    .result.cloud {
+      color: var(--fg);
+      text-shadow: 0 0 10px var(--fg);
+    }
+
+    .hint {
+      color: var(--muted);
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    /* Small screens adjustments */
+    @media (max-width: 480px) {
+      .option { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Pick Your Priorities</h1>
+
+  <div class="options" id="options">
+    <div class="option latency"   data-key="latency">Lower<br>Latency</div>
+    <div class="option bandwidth" data-key="bandwidth">Lower<br>Bandwidth</div>
+    <div class="option security"  data-key="security">Enhanced<br>Security</div>
+  </div>
+
+  <div id="result" class="result cloud">CLOUD</div>
+  <div class="hint">Toggle any option → switch to EDGE</div>
+
+  <script>
+    // Simple state store
+    const state = {
+      latency:   false,
+      bandwidth: false,
+      security:  false,
+    };
+
+    const optionsEl = document.getElementById('options');
+    const resultEl  = document.getElementById('result');
+
+    // Toggle handler
+    optionsEl.addEventListener('click', (e) => {
+      const target = e.target.closest('.option');
+      if (!target) return;
+
+      const key = target.dataset.key;
+      state[key] = !state[key];
+      target.classList.toggle('active', state[key]);
+
+      updateResult();
+    });
+
+    function updateResult() {
+      // If any is true, show EDGE, else CLOUD
+      const anyActive = Object.values(state).some(Boolean);
+      resultEl.textContent = anyActive ? 'EDGE' : 'CLOUD';
+      resultEl.classList.toggle('edge', anyActive);
+      resultEl.classList.toggle('cloud', !anyActive);
+    }
+  </script>
+</body>
+</html>
